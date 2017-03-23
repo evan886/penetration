@@ -1,0 +1,79 @@
+Linux端口扫描工具nmap and nwatch
+
+
+==nmap==
+
+
+nmap的使用方法
+
+下面是Nmap支持的四种最基本的扫描方式：
+
+    * TCP connect()端口扫描（-sT参数）。
+
+    * TCP同步（SYN）端口扫描（-sS参数）。
+
+    * UDP端口扫描（-sU参数）。
+
+    * Ping扫描（-sP参数）
+
+如果要勾画一个网络的整体情况，Ping扫描和TCP SYN扫描最为实用。
+
+    * Ping扫描通过发送ICMP（Internet Control Message Protocol，Internet控制消息协议）回应请求数据包和TCP应答（Acknowledge，简写ACK）数据包，确定主机的状态，非常适合于检测指定网段内正在运行的主机数量。
+
+    * TCP SYN扫描一下子不太好理解，但如果将它与TCP connect()扫描比较，就很容易看出这种扫描方式的特点。在TCP connect()扫描中，扫描器利用操作系统本身的系统调用打开一个完整的TCP连接也就是说，扫描器打开了两个主机之间的完整握手过程（SYN， SYN-ACK，和ACK）。一次完整执行的握手过程表明远程主机端口是打开的。
+
+    * TCP SYN扫描创建的是半打开的连接，它与TCP connect()扫描的不同之处在于，TCP SYN扫描发送的是复位（RST）标记而不是结束ACK标记（即，SYN，SYN-ACK，或RST）：如果远程主机正在监听且端口是打开的，远程主机用 SYN-ACK应答，Nmap发送一个RST；如果远程主机的端口是关闭的，它的应答将是RST，此时Nmap转入下一个端口。
+
+-sS 使用SYN＋ACK的方法，使用TCP SYN，
+
+-sT 使用TCP的方法， 3次握手全做
+
+-sU 使用UDP的方法
+
+-sP ICMP ECHO Request 送信，有反应的端口进行调查
+
+-sF FIN SCAN
+
+-sX
+
+-sN 全部FLAG OFF的无效的TCP包送信，根据错误代码判断端口情况
+
+-P0 无视ICMP ECHO request的结果，SCAN
+
+-p scan port range 指定SCAN的目端口的范围
+
+   1-100, 或者使用25,100的方式
+
+-O 侦测OS的种类
+
+-oN 文件名 通常格式文件输出
+
+-oX 文件名 通过DTD，使用XML格式输出结果
+
+-oG 文件名，grep容易的格式输出
+
+-sV 服务的程序名和版本SCAN
+
+
+
+
+https://my.oschina.net/jccpp/blog/156691
+
+
+
+
+
+def count():
+     fs = []
+     for i in range(1, 4):
+         def f(j):
+             def g():
+                 return j*j
+             return g
+         fs.append(f(i))
+     return fs
+
+
+
+ nmap -sV -sS 
+
