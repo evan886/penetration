@@ -1,3 +1,5 @@
+透测试是一种有目的性的、针对目标机构计算机系统安全的检测评估方法。渗透测试可以发现系统的漏洞和安全机制方面的隐患，并以此进行渗透攻击来取得目标计算机的控制权。通过渗透测试可以知道目标机构的计算机系统是否易于受到攻击，现有的安全部署是否能完善地抵御攻击，以及哪部分安全机制可能被绕过，等等。渗透测试的主要目的是改善目标机构的安全性。
+
 <pre>root@evanpc:~# msfconsole
                                                   
   +-------------------------------------------------------+
@@ -33,6 +35,7 @@
 下一步的工作就是找出目标计算机的操作系统以及开放端口的信息。端口扫描就是寻找目标计算机上开放的端口并识别在这些端口上运行的服务。NMAP提供了很多种用于识别开放端口的方法。NMAP命令中可以使用-O开关来完成对目标的操作系统类型检测、设备类型识别、网络距离分析、端口开放检测以及开放端口上运行的服务检测。执行的命令语句与NMAP扫描结果如下面的屏幕截图所示。
 
 #喜欢这个参数
+nmap -sV ip -p80
 nmap -sS -sV ip 
 root@evanpc:~# nmap -sV 192.168.1.97
 Starting Nmap 7.40 ( https://nmap.org ) at 2017-03-21 11:56 CST
@@ -212,6 +215,9 @@ PS: 可以在 msf  终端运行nmap  等等各种shell
 
 
 ==  参考==
+第 1 章 good 　走近Metasploit渗透测试框架
+http://www.ituring.com.cn/tupubarticle/10084#
+
 演示使用Metasploit入侵Android
 http://topspeedsnail.com/kali-linux-metasploit-hack-android/
 
@@ -277,6 +283,23 @@ https://www.offensive-security.com/metasploit-unleashed/msfconsole/
 
 Meterpreter Basic Commands
 https://www.offensive-security.com/metasploit-unleashed/meterpreter-basics/
+
+
+
+good 利用metasploit进行信息收集
+http://www.freebuf.com/articles/network/33905.html
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #####  git 常用方法  
